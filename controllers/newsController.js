@@ -2,18 +2,30 @@ const cheerio = require("cheerio");
 const { GoogleGenAI } = require("@google/genai");
 const axios = require("axios");
 const cron = require("node-cron");
+const Article = require("../models/articles");
+
 let newsData = [];
 const fetchNewsWithRotation = require("../utils/fetchWithKeyRotation");
-cron.schedule("0 */30 * * * *", async () => {
+
+cron.schedule("*/5 * * * *", async () => {
   const data = await fetchNewsWithRotation(
     (key) =>
       `https://newsdata.io/api/1/latest?apikey=${key}&country=in&language=en&image=1`,
   );
-  newsData = [...data.results, ...newsData];
+  newsData = [...data.results, ...newsData];		
+  await Article.insertMany(
+    (data.results).map((article) => ({
+      title: article.title,
+      imageUrl: article.image_url,
+      link: article.link,
+      publishedAt: new Date(article.pubDate),
+      source: article.source_name,
+    })),   
+  );
 });
 
 exports.getNews = async (req, res) => {
-  res.json(newsData);  
+  res.json(newsData);
 };
 
 exports.searchNews = async (req, res) => {
