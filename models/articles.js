@@ -1,9 +1,16 @@
 const mongoose = require('mongoose');
+
 const articleSchema = new mongoose.Schema({
   title: { type: String },
-  imageUrl: { type: String },
-  link: { type: String},
-  publishedAt: { type: Date},
-  source: { type: String}
-});
-module.exports = mongoose.model('Article', articleSchema);
+  image_url: { type: String },
+  link: { type: String },
+  publishedAt: { type: String },
+  source: { type: String }
+}, { timestamps: true });
+
+const Article = mongoose.model('Article', articleSchema, 'articles');
+const SavedArticle = mongoose.model('SavedArticle', articleSchema, 'savedArticles');
+
+module.exports = Article;
+module.exports.Article = Article;
+module.exports.SavedArticle = SavedArticle;

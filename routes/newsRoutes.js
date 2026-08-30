@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const newsController = require('../controllers/newsController');
 
-router.get('/news', newsController.getNews);
-router.get('/news/count', newsController.count);
-router.get('/news/search', newsController.searchNews);
-router.get('/news/category/:category', newsController.getNewsByCategory);
-router.post('/scrape', newsController.scrapeUrl);
+const authController = require("../controllers/authController");
 
-module.exports = router;    
+router.get('/news/date/:date', newsController.getNewsByDate);
+router.get('/news/search',authController.authenticate ,newsController.searchNews);
+router.get('/news/category/:category',authController.authenticate , newsController.getNewsByCategory);
+router.post('/scrape',authController.authenticate , newsController.scrapeUrl);
+
+module.exports = router;
