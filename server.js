@@ -10,7 +10,7 @@ const connectDB = require('./config/db');
 const app = express();
 
 app.use(cors({
-  origin: "https://news-app-kailash18.vercel.app",
+  origin: "https://news-app-sigma-blond.vercel.app/",
   credentials: true
 }));
 app.use(express.json());
