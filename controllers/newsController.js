@@ -12,11 +12,11 @@ cron.schedule("0 0 * * *", async () => {
   try {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
+    console.log(oneWeekAgo, " date news deleted");
     await Article.deleteMany({
       createdAt: { $lt: oneWeekAgo }
     });
-
+    
     const [likedArticleIds, bookmarkedArticleIds] = await Promise.all([
       Like.distinct("articleId"),
       Bookmark.distinct("articleId")
@@ -27,13 +27,13 @@ cron.schedule("0 0 * * *", async () => {
         ...bookmarkedArticleIds.map((id) => id.toString())
       ])
     ];
-
+    
     await SavedArticle.deleteMany({
       _id: {
         $nin: referencedArticleIds
       }
     });
-
+    // console.log("articles ");
   } catch (error) {
     console.error("Cleanup failed:", error);
   }
@@ -46,6 +46,7 @@ cron.schedule("0 */3 * * *", async () => {
   );
   // newsData = [...data.results, ...newsData];		
   page = data.nextPage;
+
   await Article.insertMany(
     (data.results).map((article) => ({
       title: article.title,
@@ -55,6 +56,7 @@ cron.schedule("0 */3 * * *", async () => {
       source: article.source_name,
     })),   
   );
+  console.log("new articles stored")
 }); 
 
 exports.getNewsByDate = async (req, res) => {
@@ -72,6 +74,7 @@ exports.getNewsByDate = async (req, res) => {
     });
 
     res.json({articles, count:articles.length});
+    console.log(date," date news fetched");
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -95,6 +98,7 @@ exports.searchNews = async (req, res) => {
         `https://newsdata.io/api/1/latest?apikey=${key}&country=in&language=en&image=1&q=${encodeURIComponent(q)}&page = ${data2.nextPage}`,
     );
     const articles = [...data1.results,...data2.results,...data3.results];
+    console.log(q," keyword article fetched")
     res.json({articles,count:articles.length});
 
     await searchHistory.create({userId:userId,keyword:q})  
@@ -121,6 +125,7 @@ exports.getNewsByCategory = async (req, res) => {
         `https://newsdata.io/api/1/latest?apikey=${key}&country=in&language=en&image=1&category=${encodeURIComponent(category)}&page = ${data2.nextPage}`,
     );
     const articles = [...data1.results,...data2.results,...data3.results];
+    console.log(category ," news article fetched")
     res.json({articles,count:articles.length});
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -152,7 +157,7 @@ exports.scrapeUrl = async (req, res) => {
     });
     let explanation = interaction.output_text;
     res.json({ explanation });
-    // console.log(interaction.output_text);
+    console.log("gemini respose generated and sent");
   } catch (error) {
     console.error("Extraction failed:", error.message);
   }

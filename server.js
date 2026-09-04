@@ -36,6 +36,7 @@ app.use((req, res) => {
 async function connectMongo(){
      try {
         await connectDB();
+        console.log("mongo db connected successfully")
     } catch (error) {
         console.error("MongoDB connection failed:", error);
     } 
@@ -44,7 +45,5 @@ connectMongo()
 
 
 app.listen(process.env.PORT,async () => {
-    console.log(`Server running http://localhost:${process.env.PORT}`);
+    console.log(`Server running on ${process.env.PORT}`);
 });
-// console.log("Mongo URL exists:", !!process.env.mongoUrl);
-// console.log("Mongo URL:", process.env.mongoUrl?.replace(/\/\/.*?:.*?@/, "//***:***@"));

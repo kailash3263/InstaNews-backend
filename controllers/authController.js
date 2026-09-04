@@ -6,17 +6,18 @@ const User = require("../models/User");
 exports.authenticate = (req, res, next) => {
   const token = req.cookies.token;
   if (!token) {
+    console.log("used not authenticated");
     return res.status(401).json({ message: "Not authenticated" });
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("used is authenticated");
     req.user = decoded;
     next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
-
 exports.handleSignUp = async (req, res) => {
     try {
         const { email, password,name } = req.body;
@@ -33,7 +34,7 @@ exports.handleSignUp = async (req, res) => {
             email,
             password: hashedPassword
         });
-        
+        console.log(name,"used logged in successfully");
         return res.status(201).json({
             message: "User registered successfully",
             user: {
@@ -41,7 +42,6 @@ exports.handleSignUp = async (req, res) => {
                 email: user.email
             }
         });
-
     } catch (error) {
         return res.status(500).json({
             message: "Server error"
@@ -70,6 +70,7 @@ exports.handleLogin = async (req, res) => {
         message: "Invalid email or password"
       });
     }
+    console.log("user credentials are correct");
     // Create JWT
     const token = jwt.sign(
       {
@@ -81,14 +82,16 @@ exports.handleLogin = async (req, res) => {
         expiresIn: "15d"
       }
     );
-
-      res.cookie("token", token, {
+    console.log("token generated");
+    
+    res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 15 * 24 * 60 * 60 * 1000,
     }); 
-
+    
+    console.log("cookie send to browser");
     res.json({
       'message': "Login successful"
     });

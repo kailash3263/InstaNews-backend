@@ -9,7 +9,7 @@ const getOrCreateSavedArticle = async (article) => {
   if (!savedArticle) {
     savedArticle = await SavedArticle.create({ ...article });
   }
-
+  console.log("article saved in SavedArticle collection")
   return savedArticle;
 };
 
@@ -19,7 +19,6 @@ const toggleRelation = async ({ userId, article, relationModel, successMessage, 
     userId,
     articleId: savedArticle._id,
   });
-
   if (existingRelation) {
     await relationModel.deleteOne({ _id: existingRelation._id });
     return {
@@ -27,12 +26,11 @@ const toggleRelation = async ({ userId, article, relationModel, successMessage, 
       message: removeMessage,
     };
   }
-
   await relationModel.create({
     userId,
     articleId: savedArticle._id,
   });
-
+  console.log("article liked, saved in collection")
   return {
     active: true,
     message: successMessage,
@@ -52,11 +50,12 @@ exports.toggleLike = async (req, res) => {
       successMessage: "Article liked",
       removeMessage: "Article unliked",
     });
-
+    
     return res.json({
       liked: result.active,
       message: result.message,
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -99,7 +98,7 @@ exports.getLikedArticles = async (req, res) => {
     res.json(articles);
   } catch (error) {
     console.error(error);
-
+        console.log("liked article sent to frontend");
     res.status(500).json({
       message: "Failed to fetch liked articles",
     });
@@ -113,7 +112,7 @@ exports.getBookmarkedArticles = async (req, res) => {
     const bookmarks = await Bookmark.find({ userId }).populate("articleId");
 
     const articles = bookmarks.map((bookmark) => bookmark.articleId);
-
+    console.log("bookmarked article sent to frontend");
     res.json(articles);
   } catch (error) {
     console.error(error);
@@ -132,6 +131,7 @@ exports.getSearchHistory = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(20);
 
+    console.log("search history sent to frontend");
     res.json(searches);
   } catch (error) {
     console.error(error);
@@ -145,12 +145,13 @@ exports.getSearchHistory = async (req, res) => {
 exports.deleteSearchHistory = async (req, res) => {
   try {
     const { id } = req.params;
-
+    
     await SearchHistory.deleteOne({
       _id: id,
       userId: req.user.userId,
     });
-
+    
+    console.log("search history deleted");
     res.json({
       message: "Search deleted",
     });
@@ -166,9 +167,9 @@ exports.deleteSearchHistory = async (req, res) => {
 exports.deleteLikedArticle = async (req, res) => {
   try {
     const { id } = req.params;
-
+    
     await Like.deleteOne({ articleId: id, userId: req.user.userId });
-
+    console.log("liked article deleted");
     res.status(201).json({
       message: "Deleted",
     });
@@ -186,6 +187,7 @@ exports.deleteBookmarkArticle = async (req, res) => {
     const { id } = req.params;
     await Bookmark.deleteOne({ articleId: id });
 
+    console.log("bookmark article deleted");
     res.status(201).json({
       message: "Deleted",
     });
