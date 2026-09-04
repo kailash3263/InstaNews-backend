@@ -158,7 +158,7 @@ exports.deleteSearchHistory = async (req, res) => {
     console.error(error);
 
     res.status(500).json({
-      message: "Failed to delete search", 
+      message: "Failed to delete search",
     });
   }
 };
@@ -167,11 +167,8 @@ exports.deleteLikedArticle = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await Like.deleteOne({ articleId: id });
-    const result = await Bookmark.exists({articleId: id});
-    if(!result){
-      await SavedArticle.deleteOne({ _id: id });
-    }
+    await Like.deleteOne({ articleId: id, userId: req.user.userId });
+
     res.status(201).json({
       message: "Deleted",
     });
@@ -183,14 +180,12 @@ exports.deleteLikedArticle = async (req, res) => {
     });
   }
 };
+
 exports.deleteBookmarkArticle = async (req, res) => {
   try {
     const { id } = req.params;
     await Bookmark.deleteOne({ articleId: id });
-    const result = await Like.exists({articleId: id});
-    if(!result){
-      await SavedArticle.deleteOne({ _id: id });
-    }
+
     res.status(201).json({
       message: "Deleted",
     });

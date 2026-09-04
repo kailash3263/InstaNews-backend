@@ -3,6 +3,8 @@ const { GoogleGenAI } = require("@google/genai");
 const axios = require("axios");
 const cron = require("node-cron");
 const {Article, SavedArticle} = require("../models/articles");
+const Like = require("../models/likes");
+const Bookmark = require("../models/bookmark");
 const fetchNewsWithRotation = require("../utils/fetchWithKeyRotation");
 const searchHistory = require("../models/searchHistory");
 
@@ -11,32 +13,49 @@ cron.schedule("0 0 * * *", async () => {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const result = await Article.deleteMany({
-      savedAt: { $lt: oneWeekAgo }
+    await Article.deleteMany({
+      createdAt: { $lt: oneWeekAgo }
+    });
+
+    const [likedArticleIds, bookmarkedArticleIds] = await Promise.all([
+      Like.distinct("articleId"),
+      Bookmark.distinct("articleId")
+    ]);
+    const referencedArticleIds = [
+      ...new Set([
+        ...likedArticleIds.map((id) => id.toString()),
+        ...bookmarkedArticleIds.map((id) => id.toString())
+      ])
+    ];
+
+    await SavedArticle.deleteMany({
+      _id: {
+        $nin: referencedArticleIds
+      }
     });
 
   } catch (error) {
     console.error("Cleanup failed:", error);
   }
 });
-// let page = -1;
-// cron.schedule("*/5 * * * *", async () => {
-//   const data = await fetchNewsWithRotation(
-//     (key) =>
-//       `https://newsdata.io/api/1/latest?apikey=${key}&country=in&language=en&image=1&${(page==-1)?"":("page="+page.toString())}`,
-//   );
-//   // newsData = [...data.results, ...newsData];		
-//   page = data.nextPage;
-//   await Article.insertMany(
-//     (data.results).map((article) => ({
-//       title: article.title,
-//       image_url: article.image_url, 
-//       link: article.link,
-//       publishedAt: article.pubDate,
-//       source: article.source_name,
-//     })),   
-//   );
-// });
+let page = -1;
+cron.schedule("0 */3 * * *", async () => {
+  const data = await fetchNewsWithRotation(
+    (key) =>
+      `https://newsdata.io/api/1/latest?apikey=${key}&country=in&language=en&image=1&${(page==-1)?"":("page="+page.toString())}`,
+  );
+  // newsData = [...data.results, ...newsData];		
+  page = data.nextPage;
+  await Article.insertMany(
+    (data.results).map((article) => ({
+      title: article.title,
+      image_url: article.image_url, 
+      link: article.link,
+      publishedAt: article.pubDate,
+      source: article.source_name,
+    })),   
+  );
+}); 
 
 exports.getNewsByDate = async (req, res) => {
   const { date } = req.params; // e.g. "2026-08-23"
